@@ -1,0 +1,81 @@
+
+import requests
+from lxml import etree
+import random
+import re
+# import HTMLParser
+from html.parser import HTMLParser
+
+proxy = {
+    "http": 'http://125.70.13.77:8080',
+    "http": 'https://183.6.129.212:41949'
+}
+USER_AGENTS = [
+    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; Acoo Browser; SLCC1; .NET CLR 2.0.50727; Media Center PC 5.0; .NET CLR 3.0.04506)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; AOL 9.5; AOLBuild 4337.35; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
+    "Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0; en-US)",
+    "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET CLR 2.0.50727; Media Center PC 6.0)",
+    "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET CLR 1.0.3705; .NET CLR 1.1.4322)",
+    "Mozilla/4.0 (compatible; MSIE 7.0b; Windows NT 5.2; .NET CLR 1.1.4322; .NET CLR 2.0.50727; InfoPath.2; .NET CLR 3.0.04506.30)",
+    "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN) AppleWebKit/523.15 (KHTML, like Gecko, Safari/419.3) Arora/0.3 (Change: 287 c9dfb30)",
+    "Mozilla/5.0 (X11; U; Linux; en-US) AppleWebKit/527+ (KHTML, like Gecko, Safari/419.3) Arora/0.6",
+    "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.2pre) Gecko/20070215 K-Ninja/2.1.1",
+    "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9) Gecko/20080705 Firefox/3.0 Kapiko/3.0",
+    "Mozilla/5.0 (X11; Linux i686; U;) Gecko/20070322 Kazehakase/0.4.5",
+    "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.8) Gecko Fedora/1.9.0.8-1.fc10 Kazehakase/0.5.6",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/535.20 (KHTML, like Gecko) Chrome/19.0.1036.7 Safari/535.20",
+    "Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; fr) Presto/2.9.168 Version/11.52",
+]
+dd=random.choice(USER_AGENTS)
+print(dd)
+headers={
+    "Referer": "https://www.baidu.com/",
+
+    "User-Agent": "%s"%dd
+}
+def down_load(url):
+    cc=requests.get(url=url,headers=headers,proxies=proxy)
+    # cc=etree.HTML(cc)
+    # cc.encode("utf-8").decode("utf-8")
+
+    cc.encoding="utf-8"
+    return  cc.text
+
+i=input("请输入企业相关信息（企业名、工商号或纳税人号）：")
+first_url="https://m.tianyancha.com/search?key=%s"%i
+# first_url="http://www.baidu.com"
+a=down_load(first_url)
+a=etree.HTML(a)
+detail_url=a.xpath('//div[contains(@class,"col-xs-10")]/a/@href')
+boss=a.xpath('//div[@class="search_row_new_mobil"]//a/text()')
+the_registered_capital=a.xpath('//div[@class="search_row_new_mobil"]/div/div[2]/span/text()')
+the_registered_time=a.xpath('//div[@class="search_row_new_mobil"]/div/div[3]/span/text()')
+# print(detail_url,boss,the_registered_capital,the_registered_time)
+
+gs=[]
+gs1={}
+for ii in range(len(boss)):
+    aa=down_load(detail_url[ii])
+    bb=etree.HTML(aa)
+    company=bb.xpath('//div[@class="over-hide"]/div/text()')[0]
+    industry = re.findall("行业：</span><span>(.*?)</span></div>",aa,re.S)[0]
+    the_enterprise_type = re.findall("企业类型：</span><span>(.*?)</span></div>",aa,re.S)[0]
+    registration_number = re.findall("工商注册号：</span><span>(.*?)</span></div>",aa,re.S)[0]
+    organization_code = re.findall("组织结构代码：</span><span>(.*?)</span></div>",aa,re.S)[0]
+    credit_code = re.findall("统一信用代码：</span><span>(.*?)</span></div>",aa,re.S)[0]
+    business_period = re.findall("经营期限：</span><span>(.*?)</span></div>",aa,re.S)[0]
+    # approval_date = aa.xpath('/html/body/div[3]/div[1]/div[7]/div/div[11]/span[2]/text()')[0]
+    registration_authority =re.findall("登记机关：</span><span>(.*?)</span></div>",aa,re.S)[0]
+    registered_address =re.findall("注册地址：</span><span>(.*?)</span></div>",aa,re.S)[0]
+    scope_of_business =re.findall('<text class="tyc-num">(.*?)</text>',aa,re.S)[0]
+    h=HTMLParser()  #&#xxx;‘ 的格式其实是unicode，&#后面跟的是unicode字符的十进制值，解决字体这样的方法
+    scope_of_business=h.unescape(scope_of_business)
+    new=["公司名："+company,"法人："+boss[ii],"注册时间："+the_registered_time[ii],"注册资本："+the_registered_capital[ii],"企业类型："+the_enterprise_type,"工商注册号："+registration_number,"组织结构代码："+organization_code,"统一信用代码："+credit_code,"经营年限："+business_period,"登记机关："+registration_authority,"注册地址："+registered_address,"经营范围："+scope_of_business]
+    # print(new)
+    gs1[ii+1]=["公司名："+company,"法人："+boss[ii],"注册时间："+the_registered_time[ii],"注册资本："+the_registered_capital[ii],"企业类型："+the_enterprise_type,"工商注册号："+registration_number,"组织结构代码："+organization_code,"统一信用代码："+credit_code,"经营年限："+business_period,"登记机关："+registration_authority,"注册地址："+registered_address,"经营范围："+scope_of_business]
+    gs.append(new)
+print(gs)
+# print(gs1)
+
